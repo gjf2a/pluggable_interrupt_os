@@ -23,9 +23,8 @@ fn key(key: DecodedKey) {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let handlers = HandlerTable::new()
+    HandlerTable::new()
         .keyboard(key)
-        .timer(tick);
-    pluggable_interrupt_os::init(handlers);
-    pluggable_interrupt_os::hlt_loop();
+        .timer(tick)
+        .start()
 }
