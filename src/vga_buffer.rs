@@ -35,10 +35,10 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-struct ColorCode(u8);
+pub struct ColorCode(u8);
 
 impl ColorCode {
-    fn new(foreground: Color, background: Color) -> ColorCode {
+    pub fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
@@ -50,8 +50,8 @@ struct ScreenChar {
     color_code: ColorCode,
 }
 
-const BUFFER_HEIGHT: usize = 25;
-const BUFFER_WIDTH: usize = 80;
+pub const BUFFER_HEIGHT: usize = 25;
+pub const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
@@ -65,6 +65,14 @@ pub struct Writer {
 }
 
 impl Writer {
+    fn plot(&mut self, col: usize, row: usize, content: ScreenChar) {
+        self.buffer.chars[row][col].write(content);
+    }
+
+    fn peek(&self, col: usize, row: usize) -> ScreenChar {
+        self.buffer.chars[row][col].read()
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
@@ -81,7 +89,7 @@ impl Writer {
         let row = BUFFER_HEIGHT - 1;
         let col = self.column_position;
 
-        self.buffer.chars[row][col].write(ScreenChar {
+        self.plot(col, row, ScreenChar {
             ascii_character: byte,
             color_code: self.color_code,
         });
@@ -145,4 +153,50 @@ pub fn _print(args: fmt::Arguments) {
     interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
     });
+}
+
+pub fn clear_row(row: usize, background: Color) {
+    let color = ColorCode::new(background, background);
+    for col in 0..BUFFER_WIDTH {
+        plot(' ', col, row, color);
+    }
+}
+
+pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) {
+    use crate::serial_println;
+    let end = BUFFER_WIDTH.min(col + s.len());
+    for (c, chr) in (col..end).zip(s.chars()) {
+        serial_println!("Plotting {} ({},{})", chr, c, row);
+        plot(chr, c, row, color);
+    }
+}
+
+pub fn plot(c: char, col: usize, row: usize, color: ColorCode) {
+    WRITER.lock().plot(col, row, ScreenChar { ascii_character: c as u8, color_code: color });
+}
+
+pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) {
+    if num == 0 {
+        plot('0', col, row, color);
+    } else if num < 0 {
+        plot('-', col, row, color);
+        plot_num(-num, col + 1, row, color);
+    } else {
+        let mut buffer = [' '; BUFFER_WIDTH];
+        let mut c = 0;
+        let mut num = num;
+        while num > 0 && c + col < buffer.len() {
+            buffer[c] = ((num % 10 + '0' as isize) as u8) as char;
+            num /= 10;
+            c += 1;
+        }
+        for i in 0..c {
+            plot(buffer[i], col + c - i - 1, row, color);
+        }
+    }
+}
+
+pub fn peek(col: usize, row: usize) -> (char, ColorCode) {
+    let result = WRITER.lock().peek(col, row);
+    (result.ascii_character as char, result.color_code)
 }
