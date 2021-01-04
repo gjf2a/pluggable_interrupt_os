@@ -3,7 +3,7 @@ use crate::{println, gdt};
 use lazy_static::lazy_static;
 use pic8259_simple::ChainedPics;
 use spin::Mutex;
-use crate::handler_table::HandlerTable;
+use crate::HandlerTable;
 
 lazy_static! {
     static ref HANDLERS: Mutex<Option<HandlerTable>> = Mutex::new(None);

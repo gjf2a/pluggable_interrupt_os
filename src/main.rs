@@ -8,7 +8,7 @@ mod vga_buffer;
 mod serial;
 
 use pc_keyboard::DecodedKey;
-use pluggable_interrupt_os::handler_table::HandlerTable;
+use pluggable_interrupt_os::HandlerTable;
 
 fn tick() {
     print!(".");
