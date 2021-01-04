@@ -162,6 +162,12 @@ pub fn clear_row(row: usize, background: Color) {
     }
 }
 
+pub fn clear_screen() {
+    for row in 0..BUFFER_HEIGHT {
+        clear_row(row, Color::Black);
+    }
+}
+
 pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) {
     use crate::serial_println;
     let end = BUFFER_WIDTH.min(col + s.len());
