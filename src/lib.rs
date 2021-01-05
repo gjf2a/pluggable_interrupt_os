@@ -1,6 +1,9 @@
 #![no_std]
 #![feature(abi_x86_interrupt)]
 
+// hlt_loop() and panic() are Copyright (c) 2019 Philipp Oppermann.
+// Everything else is written by Gabriel Ferrer.
+
 pub mod serial;
 pub mod vga_buffer;
 pub mod interrupts;

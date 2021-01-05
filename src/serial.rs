@@ -1,3 +1,5 @@
+// All code in this file is Copyright (c) 2019 Philipp Oppermann.
+
 use uart_16550::SerialPort;
 use spin::Mutex;
 use lazy_static::lazy_static;

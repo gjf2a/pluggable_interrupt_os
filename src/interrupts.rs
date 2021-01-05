@@ -5,6 +5,11 @@ use pic8259_simple::ChainedPics;
 use spin::Mutex;
 use crate::HandlerTable;
 
+// This code is largely Copyright (c) 2019 Philipp Oppermann.
+// Gabriel Ferrer added:
+// - HANDLERS variable.
+// - Use of HANDLERS in init_idt, timer_interrupt_handler, keyboard_interrupt_handler
+
 lazy_static! {
     static ref HANDLERS: Mutex<Option<HandlerTable>> = Mutex::new(None);
 }

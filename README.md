@@ -1,0 +1,1 @@
+Enables user to create a simple x86 OS by supplying interrupt handlers.

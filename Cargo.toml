@@ -3,7 +3,13 @@ name = "pluggable_interrupt_os"
 version = "0.1.0"
 authors = ["gjf2a <ferrer@hendrix.edu>"]
 edition = "2018"
-
+licence = "MIT"
+license_file = "LICENSE-MIT"
+description = "Enables user to create a simple x86 OS by supplying interrupt handlers"
+readme = "README.md"
+repository = "https://github.com/gjf2a/pluggable_interrupt_os"
+keywords = ["x86-interrupt-handling", "teaching-operating-systems"]
+categories = ["no-std", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

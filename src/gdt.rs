@@ -1,3 +1,5 @@
+// All code in this file is Copyright (c) 2019 Philipp Oppermann.
+
 use x86_64::VirtAddr;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::gdt::{GlobalDescriptorTable, Descriptor, SegmentSelector};

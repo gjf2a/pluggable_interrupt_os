@@ -1,3 +1,9 @@
+// Code in this file is largely Copyright (c) 2019 Philipp Oppermann.
+//
+// Gabriel Ferrer added these functions:
+// - Writer::{plot, peek, write_char}
+// - clear_row(), clear_screen(), plot_str(), plot(), plot_num(), peek()
+
 use volatile::Volatile;
 use core::fmt;
 use lazy_static::lazy_static;
