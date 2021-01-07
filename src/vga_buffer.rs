@@ -291,10 +291,11 @@ impl <'a> Plot<'a> {
         }
     }
 
-    pub fn plot_all(plots: &[Plot], col: usize, row: usize, color: ColorCode) {
+    pub fn plot_all(plots: &[Plot], col: usize, row: usize, color: ColorCode) -> usize {
         let mut col = col;
         for plot in plots {
             col = plot.plot(col, row, color);
         }
+        col
     }
 }
