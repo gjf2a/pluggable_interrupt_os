@@ -28,6 +28,7 @@ lazy_static! {
     };
 }
 
+/// Initializes the interrupt table with the given interrupt handlers.
 pub fn init_idt(handlers: HandlerTable) {
     *(HANDLERS.lock()) = Some(handlers);
     IDT.load();

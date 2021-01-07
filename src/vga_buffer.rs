@@ -24,6 +24,7 @@ lazy_static! {
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
+/// Represents a 4-bit x86 color code
 pub enum Color {
     Black = 0,
     Blue = 1,
@@ -58,6 +59,7 @@ impl From<u8> for Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
+/// Represents two 4-bit x86 colors: a foreground and a background
 pub struct ColorCode(u8);
 
 impl ColorCode {
@@ -186,6 +188,8 @@ pub fn _print(args: fmt::Arguments) {
     });
 }
 
+/// Clears one row of the VGA buffer, setting everything to the background color specified.
+/// It will **panic** on an illegal row.
 pub fn clear_row(row: usize, background: Color) {
     let color = ColorCode::new(background, background);
     for col in 0..BUFFER_WIDTH {
@@ -193,12 +197,16 @@ pub fn clear_row(row: usize, background: Color) {
     }
 }
 
+/// Sets all rows of the VGA buffer to Black.
 pub fn clear_screen() {
     for row in 0..BUFFER_HEIGHT {
         clear_row(row, Color::Black);
     }
 }
 
+/// Displays the specified string at the given coordinates.
+/// If the string exceeds the width of the buffer, it will be truncated.
+/// An illegal row will **panic**.
 pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) -> usize {
     use crate::serial_println;
     let end = BUFFER_WIDTH.min(col + s.len());
@@ -209,6 +217,9 @@ pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) -> usize {
     end % BUFFER_WIDTH
 }
 
+/// Clears a certain number of spaces.
+/// Returns the next column to use after the call.
+/// It will **panic** on an illegal row.
 pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) -> usize {
     let end = BUFFER_WIDTH.min(col + num_spaces);
     for c in col..end {
@@ -217,6 +228,8 @@ pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) -> usi
     end % BUFFER_WIDTH
 }
 
+/// Plots the given character at the given location with the given color.
+/// It will **panic** on an illegal row or column.
 pub fn plot(c: char, col: usize, row: usize, color: ColorCode) {
     WRITER.lock().plot(col, row, ScreenChar { ascii_character: c as u8, color_code: color });
 }
@@ -238,6 +251,16 @@ pub fn num_str_len(num: isize) -> usize {
     }
 }
 
+/// Displays the given number at the specified coordinates.
+/// Returns the next column to use after the call.
+///
+/// It will pad the number with spaces to its left so that it occupies **total_space** columns.
+/// If the number requires more columns than **total_spaces**, it will spill over to the right,
+/// thus foiling right-justification.
+///
+/// If the number exceeds the width of the buffer, it will be truncated.
+///
+/// It will **panic** if an illegal row is given.
 pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     let space_needed = num_str_len(num);
     let leading_spaces = if space_needed < total_space {total_space - space_needed} else {0};
@@ -247,8 +270,12 @@ pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row:
     plot_num(num, col + leading_spaces, row, color)
 }
 
-/// Draws a string corresponding to the given number starting at col, row.
-/// Returns the column number after the last digit.
+/// Displays the given number at the specified coordinates.
+/// Returns the next column to use after the call.
+///
+/// If the number exceeds the width of the buffer, it will be truncated.
+///
+/// It will **panic** if an illegal row is given.
 pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     if num == 0 {
         plot('0', col, row, color);
@@ -272,16 +299,23 @@ pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     }
 }
 
+/// Returns the character and color at the specified coordinates.
+///
+/// It will **panic** given an illegal row or column.
 pub fn peek(col: usize, row: usize) -> (char, ColorCode) {
     let result = WRITER.lock().peek(col, row);
     (result.ascii_character as char, result.color_code)
 }
 
+/// Represents different options for plotting data.
 pub enum Plot<'a>  {
     Str(&'a str), USize(usize), USizeRightJustified(usize,usize), ISize(isize), ISizeRightJustified(isize, usize), Clear(usize)
 }
 
 impl <'a> Plot<'a> {
+    /// Calls the corresponding plot function given the data.
+    ///
+    /// It will **panic** on an illegal row.
     pub fn plot(&self, col: usize, row: usize, color: ColorCode) -> usize {
         match self {
             Plot::Str(s) => plot_str(s, col, row, color),
@@ -295,6 +329,10 @@ impl <'a> Plot<'a> {
         }
     }
 
+    /// Calls the plot functions for all of the elements of **plots**, returning the final
+    /// column number when complete. It will display each element in left-to-right order.
+    ///
+    /// It will **panic** on an illegal row.
     pub fn plot_all(col: usize, row: usize, color: ColorCode, plots: &[Plot]) -> usize {
         let mut col = col;
         for plot in plots {

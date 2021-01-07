@@ -1,9 +1,6 @@
 #![no_std]
 #![no_main]
 
-// Based on Writing an OS in Rust (https://os.phil-opp.com/)
-// Adapted by Gabriel Ferrer
-
 mod vga_buffer;
 mod serial;
 
