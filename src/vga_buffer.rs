@@ -1,10 +1,12 @@
 // Code in this file is largely Copyright (c) 2019 Philipp Oppermann.
 //
-// Gabriel Ferrer added these functions:
+// Gabriel Ferrer added these elements:
 // - Writer::{plot, peek, write_char}
 // - clear_row(), clear_screen(), plot_str(), plot(), plot_num(), peek()
 // - clear(), plot_num_right_justified(), num_str_len()
 // - ColorCode::{foreground(), background()}
+// - Plot enum
+// - impl From for Color
 
 use volatile::Volatile;
 use core::fmt;
@@ -240,7 +242,7 @@ pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row:
     let space_needed = num_str_len(num);
     let leading_spaces = if space_needed < total_space {total_space - space_needed} else {0};
     if leading_spaces > 0 {
-        clear(leading_spaces, col, row, ColorCode::new(color.background(), color.background()))
+        clear(leading_spaces, col, row, ColorCode::new(color.background(), color.background()));
     }
     plot_num(num, col + leading_spaces, row, color)
 }
@@ -273,4 +275,26 @@ pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
 pub fn peek(col: usize, row: usize) -> (char, ColorCode) {
     let result = WRITER.lock().peek(col, row);
     (result.ascii_character as char, result.color_code)
+}
+
+pub enum Plot<'a>  {
+    Str(&'a str), Num(isize), NumRightJustified(isize,usize), Clear(usize)
+}
+
+impl <'a> Plot<'a> {
+    pub fn plot(&self, col: usize, row: usize, color: ColorCode) -> usize {
+        match self {
+            Plot::Str(s) => plot_str(s, col, row, color),
+            Plot::Num(num) => plot_num(*num, col, row, color),
+            Plot::Clear(num_spaces) => clear(*num_spaces, col, row, color),
+            Plot::NumRightJustified(num, total_space) => plot_num_right_justified(*total_space, *num, col, row, color)
+        }
+    }
+
+    pub fn plot_all(plots: &[Plot], col: usize, row: usize, color: ColorCode) {
+        let mut col = col;
+        for plot in plots {
+            col = plot.plot(col, row, color);
+        }
+    }
 }
