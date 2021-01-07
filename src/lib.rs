@@ -8,7 +8,7 @@
 //!
 //! The code is heavily derivative of the examples from the outstanding resource
 //! [Writing an Operating System in Rust](https://os.phil-opp.com/). I would like to gratefully
-//! acknowledge Phillipp Oppermann's efforts to create this resource. Comments in each source file
+//! acknowledge Philipp Oppermann's efforts to create this resource. Comments in each source file
 //! specify which code elements I have adopted from him.
 //!
 //! Before attempting to use this crate, it is essential to read the following tutorials. In fact,
