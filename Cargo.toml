@@ -7,7 +7,7 @@ license = "MIT"
 description = "Enables user to create a simple x86 OS by supplying interrupt handlers"
 readme = "README.md"
 repository = "https://github.com/gjf2a/pluggable_interrupt_os"
-keywords = ["x86-interrupt-handling", "teaching-os"]
+keywords = ["x86-interrupts", "teaching-os"]
 categories = ["no-std", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
