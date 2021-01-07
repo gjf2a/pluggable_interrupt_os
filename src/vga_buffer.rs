@@ -204,14 +204,15 @@ pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) -> usize {
         serial_println!("Plotting {} ({},{})", chr, c, row);
         plot(chr, c, row, color);
     }
-    end
+    end % BUFFER_WIDTH
 }
 
-pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) {
+pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) -> usize {
     let end = BUFFER_WIDTH.min(col + num_spaces);
     for c in col..end {
         plot(' ', c, row, color);
     }
+    end % BUFFER_WIDTH
 }
 
 pub fn plot(c: char, col: usize, row: usize, color: ColorCode) {
@@ -249,7 +250,7 @@ pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row:
 pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     if num == 0 {
         plot('0', col, row, color);
-        col + 1
+        (col + 1) % BUFFER_WIDTH
     } else if num < 0 {
         plot('-', col, row, color);
         plot_num(-num, col + 1, row, color)
@@ -265,7 +266,7 @@ pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
         for i in 0..c {
             plot(buffer[i], col + c - i - 1, row, color);
         }
-        col + c
+        (col + c) % BUFFER_WIDTH
     }
 }
 
