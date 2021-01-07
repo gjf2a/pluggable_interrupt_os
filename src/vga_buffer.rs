@@ -278,16 +278,20 @@ pub fn peek(col: usize, row: usize) -> (char, ColorCode) {
 }
 
 pub enum Plot<'a>  {
-    Str(&'a str), Num(isize), NumRightJustified(isize,usize), Clear(usize)
+    Str(&'a str), USize(usize), USizeRightJustified(usize,usize), ISize(isize), ISizeRightJustified(isize, usize), Clear(usize)
 }
 
 impl <'a> Plot<'a> {
     pub fn plot(&self, col: usize, row: usize, color: ColorCode) -> usize {
         match self {
             Plot::Str(s) => plot_str(s, col, row, color),
-            Plot::Num(num) => plot_num(*num, col, row, color),
             Plot::Clear(num_spaces) => clear(*num_spaces, col, row, color),
-            Plot::NumRightJustified(num, total_space) => plot_num_right_justified(*total_space, *num, col, row, color)
+            Plot::ISize(num) => plot_num(*num, col, row, color),
+            Plot::ISizeRightJustified(num, total_space) =>
+                plot_num_right_justified(*total_space, *num, col, row, color),
+            Plot::USize(num) => plot_num(*num as isize, col, row, color),
+            Plot::USizeRightJustified(num, total_space) =>
+                plot_num_right_justified(*total_space, *num as isize, col, row, color)
         }
     }
 
