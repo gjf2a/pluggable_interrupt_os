@@ -25,7 +25,95 @@ don't just read the tutorials; work through them! In particular, make sure to se
 - [Hardware Interrupts](https://os.phil-opp.com/hardware-interrupts/)
 
 Having read and understood the ideas from the above tutorials, you can use this crate to create
-your own Pluggable Interrupt Operating System (PIOS). 
+your own Pluggable Interrupt Operating System (PIOS).
 
-This is a pedagogical experiment. I would be interested to hear from anyone who 
-finds this useful or has suggestions. 
+Here is a very basic example (found in main.rs in this crate):
+```
+#![no_std]
+#![no_main]
+
+use pc_keyboard::DecodedKey;
+use pluggable_interrupt_os::HandlerTable;
+
+fn tick() {
+    print!(".");
+}
+
+fn key(key: DecodedKey) {
+    match key {
+        DecodedKey::Unicode(character) => print!("{}", character),
+        DecodedKey::RawKey(key) => print!("{:?}", key),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    HandlerTable::new()
+        .keyboard(key)
+        .timer(tick)
+        .start()
+}
+```
+
+In this example, we begin with our interrupt handlers. The **tick()** handler prints a period
+on every timer event, and the **key()** handler displays the character typed whenever the
+key is pressed. The **_start()** function kicks everything off by placing references to these
+two functions in a **HandlerTable** object. Invoking **.start()** on the **HandlerTable**
+starts execution. The PIOS sits back and loops endlessly, relying on the event handlers to
+perform any events of interest or importance.
+
+As we can see from this example, the capabilities of your PIOS will be
+limited to handling keyboard events and displaying text in the VGA buffer. Within that scope,
+however, you can achieve quite a lot. I personally enjoyed recreating a version of a
+well-known 1980s [arcade classic](https://github.com/gjf2a/ghost_hunter).
+
+Here is the main.rs from that program:
+```
+#![no_std]
+#![no_main]
+
+use lazy_static::lazy_static;
+use spin::Mutex;
+use ghost_hunter_core::GhostHunterGame;
+use ghost_hunter::MainGame;
+use pluggable_interrupt_os::HandlerTable;
+use pc_keyboard::DecodedKey;
+
+lazy_static! {
+    static ref GAME: Mutex<MainGame> = Mutex::new(GhostHunterGame::new());
+}
+
+fn tick() {
+    ghost_hunter::tick(&mut GAME.lock());
+}
+
+fn key(key: DecodedKey) {
+    GAME.lock().key(key);
+}
+
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    HandlerTable::new()
+        .keyboard(key)
+        .timer(tick)
+        .start()
+}
+```
+
+For this program, I created a
+[GhostHunterGame struct](https://github.com/gjf2a/ghost_hunter_core/blob/master/src/lib.rs)
+to represent the state of the game. It is wrapped in a **Mutex** and initialized using
+[lazy_static!](https://docs.rs/lazy_static/1.4.0/lazy_static/) to ensure safe access. Nearly
+any nontrivial program will need to make use of this design pattern.
+
+The **tick()** function calls a special
+[ghost_hunter::tick()](https://github.com/gjf2a/ghost_hunter/blob/master/src/lib.rs) function
+that handles details of drawing the game state in the VGA buffer. It also advances the ghosts
+by one position.
+
+The **key()** function calls the **GhostHunterGame::key()** method to convey updates to game
+state resulting from keypresses.
+
+This is a pedagogical experiment. I would be interested to hear from anyone who
+finds this useful or has suggestions.
+
