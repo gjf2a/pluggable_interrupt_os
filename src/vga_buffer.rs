@@ -3,6 +3,8 @@
 // Gabriel Ferrer added these functions:
 // - Writer::{plot, peek, write_char}
 // - clear_row(), clear_screen(), plot_str(), plot(), plot_num(), peek()
+// - clear(), plot_num_right_justified(), num_str_len()
+// - ColorCode::{foreground(), background()}
 
 use volatile::Volatile;
 use core::fmt;
@@ -39,6 +41,19 @@ pub enum Color {
     White = 15,
 }
 
+impl From<u8> for Color {
+    // I attempted to use the enum-repr crate instead of doing this, but it did not compile.
+    fn from(n: u8) -> Self {
+        use Color::*;
+        match n {
+            0 => Black, 1 => Blue, 2 => Green, 3 => Cyan, 4 => Red, 5 => Magenta, 6 => Brown,
+            7 => LightGray, 8 => DarkGray, 9 => LightBlue, 10 => LightGreen, 11 => LightCyan,
+            12 => LightRed, 13 => Pink, 14 => Yellow, 15 => White,
+            _ => panic!("Undefined color value: {}", n)
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct ColorCode(u8);
@@ -46,6 +61,14 @@ pub struct ColorCode(u8);
 impl ColorCode {
     pub fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
+    }
+
+    pub fn foreground(&self) -> Color {
+        Color::from(self.0 & 0xF)
+    }
+
+    pub fn background(&self) -> Color {
+        Color::from((self.0 & 0xF0) >> 4)
     }
 }
 
@@ -183,16 +206,52 @@ pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) {
     }
 }
 
+pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) {
+    let end = BUFFER_WIDTH.min(col + num_spaces);
+    for c in col..end {
+        plot(' ', c, row, color);
+    }
+}
+
 pub fn plot(c: char, col: usize, row: usize, color: ColorCode) {
     WRITER.lock().plot(col, row, ScreenChar { ascii_character: c as u8, color_code: color });
 }
 
-pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) {
+/// Returns the length **num** would have when plotted.
+pub fn num_str_len(num: isize) -> usize {
+    if num == 0 {
+        1
+    } else if num < 0 {
+        1 + num_str_len(-num)
+    } else {
+        let mut num = num;
+        let mut c = 0;
+        while num > 0 {
+            num /= 10;
+            c += 1;
+        }
+        c
+    }
+}
+
+pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row: usize, color: ColorCode) -> usize {
+    let space_needed = num_str_len(num);
+    let leading_spaces = if space_needed < total_space {total_space - space_needed} else {0};
+    if leading_spaces > 0 {
+        clear(leading_spaces, col, row, ColorCode::new(color.background(), color.background()))
+    }
+    plot_num(num, col + leading_spaces, row, color) + leading_spaces
+}
+
+/// Draws a string corresponding to the given number starting at col, row.
+/// Returns the length of the plotted number after plotting it.
+pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     if num == 0 {
         plot('0', col, row, color);
+        1
     } else if num < 0 {
         plot('-', col, row, color);
-        plot_num(-num, col + 1, row, color);
+        plot_num(-num, col + 1, row, color)
     } else {
         let mut buffer = [' '; BUFFER_WIDTH];
         let mut c = 0;
@@ -205,6 +264,7 @@ pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) {
         for i in 0..c {
             plot(buffer[i], col + c - i - 1, row, color);
         }
+        c
     }
 }
 
