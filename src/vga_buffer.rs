@@ -197,13 +197,14 @@ pub fn clear_screen() {
     }
 }
 
-pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) {
+pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) -> usize {
     use crate::serial_println;
     let end = BUFFER_WIDTH.min(col + s.len());
     for (c, chr) in (col..end).zip(s.chars()) {
         serial_println!("Plotting {} ({},{})", chr, c, row);
         plot(chr, c, row, color);
     }
+    end
 }
 
 pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) {
@@ -240,15 +241,15 @@ pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row:
     if leading_spaces > 0 {
         clear(leading_spaces, col, row, ColorCode::new(color.background(), color.background()))
     }
-    plot_num(num, col + leading_spaces, row, color) + leading_spaces
+    plot_num(num, col + leading_spaces, row, color)
 }
 
 /// Draws a string corresponding to the given number starting at col, row.
-/// Returns the length of the plotted number after plotting it.
+/// Returns the column number after the last digit.
 pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     if num == 0 {
         plot('0', col, row, color);
-        1
+        col + 1
     } else if num < 0 {
         plot('-', col, row, color);
         plot_num(-num, col + 1, row, color)
@@ -264,7 +265,7 @@ pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
         for i in 0..c {
             plot(buffer[i], col + c - i - 1, row, color);
         }
-        c
+        col + c
     }
 }
 
