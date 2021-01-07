@@ -62,6 +62,7 @@ impl From<u8> for Color {
 /// Represents two 4-bit x86 colors: a foreground and a background
 pub struct ColorCode(u8);
 
+#[allow(dead_code)]
 impl ColorCode {
     pub fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
@@ -97,6 +98,7 @@ pub struct Writer {
     buffer: &'static mut Buffer,
 }
 
+#[allow(dead_code)]
 impl Writer {
     fn plot(&mut self, col: usize, row: usize, content: ScreenChar) {
         self.buffer.chars[row][col].write(content);
@@ -188,6 +190,7 @@ pub fn _print(args: fmt::Arguments) {
     });
 }
 
+#[allow(dead_code)]
 /// Clears one row of the VGA buffer, setting everything to the background color specified.
 /// It will **panic** on an illegal row.
 pub fn clear_row(row: usize, background: Color) {
@@ -197,6 +200,7 @@ pub fn clear_row(row: usize, background: Color) {
     }
 }
 
+#[allow(dead_code)]
 /// Sets all rows of the VGA buffer to Black.
 pub fn clear_screen() {
     for row in 0..BUFFER_HEIGHT {
@@ -204,6 +208,7 @@ pub fn clear_screen() {
     }
 }
 
+#[allow(dead_code)]
 /// Displays the specified string at the given coordinates.
 /// If the string exceeds the width of the buffer, it will be truncated.
 /// An illegal row will **panic**.
@@ -217,6 +222,7 @@ pub fn plot_str(s: &str, col: usize, row: usize, color: ColorCode) -> usize {
     end % BUFFER_WIDTH
 }
 
+#[allow(dead_code)]
 /// Clears a certain number of spaces.
 /// Returns the next column to use after the call.
 /// It will **panic** on an illegal row.
@@ -228,12 +234,14 @@ pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) -> usi
     end % BUFFER_WIDTH
 }
 
+#[allow(dead_code)]
 /// Plots the given character at the given location with the given color.
 /// It will **panic** on an illegal row or column.
 pub fn plot(c: char, col: usize, row: usize, color: ColorCode) {
     WRITER.lock().plot(col, row, ScreenChar { ascii_character: c as u8, color_code: color });
 }
 
+#[allow(dead_code)]
 /// Returns the length **num** would have when plotted.
 pub fn num_str_len(num: isize) -> usize {
     if num == 0 {
@@ -251,6 +259,7 @@ pub fn num_str_len(num: isize) -> usize {
     }
 }
 
+#[allow(dead_code)]
 /// Displays the given number at the specified coordinates.
 /// Returns the next column to use after the call.
 ///
@@ -270,6 +279,7 @@ pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row:
     plot_num(num, col + leading_spaces, row, color)
 }
 
+#[allow(dead_code)]
 /// Displays the given number at the specified coordinates.
 /// Returns the next column to use after the call.
 ///
@@ -299,6 +309,7 @@ pub fn plot_num(num: isize, col: usize, row: usize, color: ColorCode) -> usize {
     }
 }
 
+#[allow(dead_code)]
 /// Returns the character and color at the specified coordinates.
 ///
 /// It will **panic** given an illegal row or column.
@@ -307,11 +318,13 @@ pub fn peek(col: usize, row: usize) -> (char, ColorCode) {
     (result.ascii_character as char, result.color_code)
 }
 
+#[allow(dead_code)]
 /// Represents different options for plotting data.
 pub enum Plot<'a>  {
     Str(&'a str), USize(usize), USizeRightJustified(usize,usize), ISize(isize), ISizeRightJustified(isize, usize), Clear(usize)
 }
 
+#[allow(dead_code)]
 impl <'a> Plot<'a> {
     /// Calls the corresponding plot function given the data.
     ///
