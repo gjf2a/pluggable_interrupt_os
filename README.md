@@ -114,6 +114,18 @@ by one position.
 The **key()** function calls the **GhostHunterGame::key()** method to convey updates to game
 state resulting from keypresses.
 
+To help you get started on your own projects, I have created a 
+[project template](https://github.com/gjf2a/pluggable_interrupt_template) 
+that includes most of what you need. To get the project template working, you'll 
+also need to install the following:
+* [Qemu](https://www.qemu.org/)
+* Nightly Rust. To install:
+    * `rustup default nightly`
+* `llvm-tools-preview`. To install:
+    * `rustup component add llvm-tools-preview`
+* The [bootimage](https://github.com/rust-osdev/bootimage) tool. To install it:
+    * `cargo install bootimage`
+
 This is a pedagogical experiment. I would be interested to hear from anyone who
 finds this useful or has suggestions.
 
