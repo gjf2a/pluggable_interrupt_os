@@ -23,11 +23,11 @@ Before attempting to use this crate:
   * [Hardware Interrupts](https://os.phil-opp.com/hardware-interrupts/)
 * Install the following software:
   * [Qemu](https://www.qemu.org/)
-  * Nightly Rust. To install:
+  * Nightly Rust:
     * `rustup default nightly`
-  * `llvm-tools-preview`. To install:
+  * `llvm-tools-preview`:
     * `rustup component add llvm-tools-preview`
-  * The [bootimage](https://github.com/rust-osdev/bootimage) tool. To install it:
+  * The [bootimage](https://github.com/rust-osdev/bootimage) tool:
     * `cargo install bootimage`
 * Set up the following files as described in the tutorials:
   * [x86_64-blog_os.json](https://os.phil-opp.com/minimal-rust-kernel/#a-minimal-kernel)
