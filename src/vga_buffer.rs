@@ -12,9 +12,9 @@ use volatile::Volatile;
 use core::fmt;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use core::ops::RangeInclusive;
 
-pub const DRAWABLE: RangeInclusive<u8> = 0x20..=0x7e;
+const MIN_DRAWABLE: u8 = 0x20;
+const MAX_DRAWABLE: u8 = 0x73;
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
@@ -158,7 +158,7 @@ impl Writer {
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
             match byte {
-                DRAWABLE | b'\n' => self.write_byte(byte),
+                MIN_DRAWABLE..=MAX_DRAWABLE | b'\n' => self.write_byte(byte),
                 _ => self.write_byte(0xfe),
             }
         }
@@ -167,7 +167,7 @@ impl Writer {
 
 pub fn is_drawable(c: char) -> bool {
     match c as u8 {
-        DRAWABLE => true,
+        MIN_DRAWABLE..=MAX_DRAWABLE => true,
         _ => false
     }
 }
