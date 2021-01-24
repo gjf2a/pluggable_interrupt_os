@@ -162,6 +162,13 @@ impl Writer {
     }
 }
 
+pub fn is_drawable(c: byte) -> bool {
+    match c {
+        0x20..=0x7e => true,
+        _ => false
+    }
+}
+
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.write_string(s);
