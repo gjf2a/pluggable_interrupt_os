@@ -162,7 +162,7 @@ impl Writer {
     }
 }
 
-pub fn is_drawable(c: byte) -> bool {
+pub fn is_drawable(c: u8) -> bool {
     match c {
         0x20..=0x7e => true,
         _ => false
