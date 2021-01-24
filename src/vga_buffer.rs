@@ -162,8 +162,8 @@ impl Writer {
     }
 }
 
-pub fn is_drawable(c: u8) -> bool {
-    match c {
+pub fn is_drawable(c: char) -> bool {
+    match c as u8 {
         0x20..=0x7e => true,
         _ => false
     }
