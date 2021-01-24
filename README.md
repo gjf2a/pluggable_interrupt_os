@@ -137,6 +137,7 @@ use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, Colo
 use pc_keyboard::{DecodedKey, KeyCode};
 use num::traits::SaturatingAdd;
 
+#[derive(Copy,Debug,Clone,Eq,PartialEq)]
 pub struct LetterMover {
     letters: [char; BUFFER_WIDTH],
     num_letters: ModNum<usize>,
