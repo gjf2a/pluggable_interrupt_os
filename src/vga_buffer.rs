@@ -14,7 +14,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 const MIN_DRAWABLE: u8 = 0x20;
-const MAX_DRAWABLE: u8 = 0x73;
+const MAX_DRAWABLE: u8 = 0x7e;
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
