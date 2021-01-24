@@ -165,6 +165,13 @@ impl Writer {
     }
 }
 
+pub fn is_drawable(c: char) -> bool {
+    match c as u8 {
+        DRAWABLE => true,
+        _ => false
+    }
+}
+
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.write_string(s);
