@@ -4,7 +4,7 @@ This crate enables the user to create a simple operating system by supplying int
 for the timer and the keyboard. As time and energy permits, I may add other interrupt handlers
 that seem useful.
 
-I developed this crate to support two assignments in my operating systems course at Hendrix
+I developed this crate to support assignments in my operating systems course at Hendrix
 College. It provides a nice introduction to bare-metal programming. It has not been
 "battle-tested" in a production domain.
 

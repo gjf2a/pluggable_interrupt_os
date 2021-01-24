@@ -165,6 +165,7 @@ impl Writer {
     }
 }
 
+#[allow(dead_code)]
 pub fn is_drawable(c: char) -> bool {
     match c as u8 {
         MIN_DRAWABLE..=MAX_DRAWABLE => true,
