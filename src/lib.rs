@@ -140,20 +140,23 @@ use pc_keyboard::DecodedKey;
 /// I will add more if it seems useful to do so.
 /// Double-fault handling is addressed "behind the scenes".
 pub struct HandlerTable {
-    timer: Option<fn()>, keyboard: Option<fn(DecodedKey)>
+    timer: Option<fn()>, keyboard: Option<fn(DecodedKey)>, startup: Option<fn()>, foreground: fn()
 }
 
 impl HandlerTable {
     /// Creates a new HandlerTable with no handlers.
     pub fn new() -> Self {
-        HandlerTable {timer: None, keyboard: None}
+        HandlerTable {timer: None, keyboard: None, startup: None, foreground: x86_64::instructions::hlt}
     }
 
     /// Starts up a simple operating system using the specified handlers.
     pub fn start(self) -> ! {
+        self.startup.map(|f| f());
+        let fore = self.foreground;
         init(self);
-        println!("Starting up...");
-        hlt_loop();
+        loop {
+            (fore)()
+        }
     }
 
     /// Sets the timer handler.
@@ -184,6 +187,21 @@ impl HandlerTable {
         if let Some(keyboard) = self.keyboard {
             (keyboard)(key)
         }
+    }
+
+    /// Sets the startup handler.
+    /// Returns Self for chained [Builder pattern construction](https://doc.rust-lang.org/1.0.0/style/ownership/builders.html).
+    pub fn startup(mut self, startup_handler: fn()) -> Self {
+        self.startup = Some(startup_handler);
+        self
+    }
+
+    /// Sets the foreground loop handler.
+    /// This function is called indefinitely.
+    /// Returns Self for chained [Builder pattern construction](https://doc.rust-lang.org/1.0.0/style/ownership/builders.html).
+    pub fn foreground_loop(mut self, foreground_loop: fn()) -> Self {
+        self.foreground = foreground_loop;
+        self
     }
 }
 

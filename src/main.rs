@@ -7,6 +7,10 @@ mod serial;
 use pc_keyboard::DecodedKey;
 use pluggable_interrupt_os::HandlerTable;
 
+fn start() {
+    println!("Starting up!");
+}
+
 fn tick() {
     print!(".");
 }
@@ -23,5 +27,6 @@ pub extern "C" fn _start() -> ! {
     HandlerTable::new()
         .keyboard(key)
         .timer(tick)
+        .startup(start)
         .start()
 }
