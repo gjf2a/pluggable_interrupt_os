@@ -262,6 +262,9 @@ This is a pedagogical experiment. I would be interested to hear from anyone who
 finds this useful or has suggestions.
 
 Updates:
+* **0.4**
+  * Updated to pic8259 version 0.10
+  * Fixed corresponding maintenance errors.
 * **0.2**
   * Added `is_drawable()` function to determine whether a given `char` can be rendered in the 
     VGA buffer.
