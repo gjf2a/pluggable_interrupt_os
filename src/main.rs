@@ -8,7 +8,7 @@ use pc_keyboard::DecodedKey;
 use pluggable_interrupt_os::HandlerTable;
 
 fn start() {
-    println!("Starting up!");
+    println!("Hello, world!");
 }
 
 fn tick() {
