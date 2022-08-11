@@ -140,7 +140,10 @@ use pc_keyboard::DecodedKey;
 /// I will add more if it seems useful to do so.
 /// Double-fault handling is addressed "behind the scenes".
 pub struct HandlerTable {
-    timer: Option<fn()>, keyboard: Option<fn(DecodedKey)>, startup: Option<fn()>, cpu_loop: fn() -> !
+    timer: Option<fn()>,
+    keyboard: Option<fn(DecodedKey)>,
+    startup: Option<fn()>,
+    cpu_loop: fn() -> !
 }
 
 impl HandlerTable {

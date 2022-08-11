@@ -1,6 +1,6 @@
 [package]
 name = "pluggable_interrupt_os"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["gjf2a <ferrer@hendrix.edu>"]
 edition = "2018"
 license = "MIT"
