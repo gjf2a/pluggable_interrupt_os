@@ -24,7 +24,7 @@ Before attempting to use this crate:
 * Install the following software:
   * [Qemu](https://www.qemu.org/)
   * Nightly Rust:
-    * `rustup default nightly`
+    * `rustup override set nightly`
   * `llvm-tools-preview`:
     * `rustup component add llvm-tools-preview`
   * The [bootimage](https://github.com/rust-osdev/bootimage) tool:
@@ -37,6 +37,8 @@ Before attempting to use this crate:
 
 Having read and understood the ideas from the above tutorials, you can use this crate to create
 your own Pluggable Interrupt Operating System (PIOS).
+
+# Simple Example
 
 Here is a very basic example (found in `main.rs` in this crate):
 ```
@@ -72,6 +74,8 @@ key is pressed. The **_start()** function kicks everything off by placing refere
 two functions in a **HandlerTable** object. Invoking **.start()** on the **HandlerTable**
 starts execution. The PIOS sits back and loops endlessly, relying on the event handlers to
 perform any events of interest or importance.
+
+# More Elaborate Example
 
 I have created a 
 [simple but more elaborate example](https://github.com/gjf2a/pluggable_interrupt_template) 
@@ -253,9 +257,78 @@ On each tick:
 The keyboard handler receives each character as it is typed. Keys representable as a `char`
 are added to the moving string. The arrow keys change how the string is moving.
 
-As we can see from this example, the capabilities of your PIOS will be
-limited to handling keyboard events and displaying text in the VGA buffer. Within that scope,
-however, you can achieve quite a lot. I personally enjoyed recreating a version of a
+# Running Background Code - An Alternative Solution to Concurrent Data Access
+
+The code contained in the function given to the `.cpu_loop()` method will execute whenever
+interrupts are not triggered. This option leads to an alternative implementation of 
+concurrent access to the central data structure. Rather than using a spinlock `Mutex`,
+the central data structure can instead be a local variable in the `cpu_loop` function. 
+Information about interrupts can be stored and accessed using `AtomicCell` objects from
+the `crossbeam` crate. 
+
+Note that this approach enables the creation of more general programs than the previous 
+approach, as arbitrary code can run in the `cpu_loop` while awaiting interrupts.
+
+The code below is an updated version of the `main.rs` in the previous example that employs this
+alternate approach. The `lib.rs` code from above works unchanged with this alternative version.
+
+```
+#![no_std]
+#![no_main]
+
+use pc_keyboard::DecodedKey;
+use pluggable_interrupt_os::HandlerTable;
+use pluggable_interrupt_os::vga_buffer::clear_screen;
+use pluggable_interrupt_template::LetterMover;
+use crossbeam::atomic::AtomicCell;
+
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    HandlerTable::new()
+        .keyboard(key)
+        .timer(tick)
+        .startup(startup)
+        .cpu_loop(cpu_loop)
+        .start()
+}
+
+static LAST_KEY: AtomicCell<Option<DecodedKey>> = AtomicCell::new(None);
+static TICKS: AtomicCell<usize> = AtomicCell::new(0);
+
+fn cpu_loop() -> ! {
+    let mut kernel = LetterMover::new();
+    let mut last_tick = 0;
+    loop {
+        if let Some(key) = LAST_KEY.load() {
+            LAST_KEY.store(None);
+            kernel.key(key);
+        }
+        let current_tick = TICKS.load();
+        if current_tick > last_tick {
+            last_tick = current_tick;
+            kernel.tick();
+        }
+    }
+}
+
+fn tick() {
+    TICKS.fetch_add(1);
+}
+
+fn key(key: DecodedKey) {
+    LAST_KEY.store(Some(key));
+}
+
+fn startup() {
+    clear_screen();
+}
+```
+
+# Concluding Thoughts
+
+As we can see from these examples, the capabilities of your PIOS will be
+limited to handling keyboard and timer events and displaying text in the VGA buffer. Within 
+that scope, however, you can achieve quite a lot. I personally enjoyed recreating a version of a
 well-known 1980s [arcade classic](https://github.com/gjf2a/ghost_hunter).
 
 This is a pedagogical experiment. I would be interested to hear from anyone who
