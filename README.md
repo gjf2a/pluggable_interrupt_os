@@ -1,11 +1,12 @@
 # Overview
 
 This crate enables the user to create a simple operating system by supplying interrupt handlers
-for the timer and the keyboard. As time and energy permits, I may add other interrupt handlers
+for the timer and the keyboard. As time and energy permit, I may add other interrupt handlers
 that seem useful.
 
-I developed this crate to support assignments in my operating systems course at Hendrix
-College. It provides a nice introduction to bare-metal programming. It has not been
+I developed this crate to support assignments in the [operating systems course](https://hendrix-cs.github.io/csci320/) 
+at [Hendrix College](https://www.hendrix.edu/). 
+It provides a nice introduction to bare-metal programming. It has not been
 "battle-tested" in a production domain.
 
 The code is heavily derivative of the examples from the outstanding resource

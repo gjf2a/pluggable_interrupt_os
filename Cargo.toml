@@ -1,8 +1,8 @@
 [package]
 name = "pluggable_interrupt_os"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["gjf2a <ferrer@hendrix.edu>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 description = "Enables user to create a simple x86 OS by supplying interrupt handlers"
 readme = "README.md"
