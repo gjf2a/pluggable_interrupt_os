@@ -1,6 +1,6 @@
 [package]
 name = "pluggable_interrupt_os"
-version = "0.4.4"
+version = "0.4.5"
 authors = ["gjf2a <ferrer@hendrix.edu>"]
 edition = "2021"
 license = "MIT"
@@ -12,13 +12,13 @@ categories = ["no-std", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bootloader = "0.9.8"
-volatile = "0.2.6"
-spin = "0.5.2"
-x86_64 = "0.14.2"
-uart_16550 = "0.2.0"
-pic8259 = "0.10.1"
-pc-keyboard = "0.5.1"
+bootloader = "0.9.8" # Can't upgrade to 0.10
+volatile = "0.3" # Can't upgrade to 0.4
+spin = "0.9"
+x86_64 = "0.14"
+uart_16550 = "0.2"
+pic8259 = "0.10"
+pc-keyboard = "0.5" # Can't upgrade to 0.6
 
 [dependencies.lazy_static]
 version = "1.0"
