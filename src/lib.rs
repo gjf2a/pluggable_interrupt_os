@@ -25,7 +25,7 @@
 //! Having read and understood the ideas from the above tutorials, you can use this crate to create
 //! your own Pluggable Interrupt Operating System (PIOS).
 //!
-//! Here is a very basic example (found in main.rs in this crate):
+//! Here is a very basic example (found in `main.rs`` in this crate):
 //! ```
 //! #![no_std]
 //! #![no_main]
@@ -65,7 +65,7 @@
 //! however, you can achieve quite a lot. I personally enjoyed recreating a version of a
 //! well-known 1980s [arcade classic](https://github.com/gjf2a/ghost_hunter).
 //!
-//! Here is the main.rs from that program:
+//! Here is the `main.rs`` from that program:
 //! ```
 //! #![no_std]
 //! #![no_main]
