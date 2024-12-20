@@ -8,10 +8,10 @@
 // - Plot enum
 // - impl From for Color
 
-use volatile::Volatile;
 use core::fmt;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use volatile::Volatile;
 
 const MIN_DRAWABLE: u8 = 0x20;
 const MAX_DRAWABLE: u8 = 0x7e;
@@ -52,10 +52,23 @@ impl From<u8> for Color {
     fn from(n: u8) -> Self {
         use Color::*;
         match n {
-            0 => Black, 1 => Blue, 2 => Green, 3 => Cyan, 4 => Red, 5 => Magenta, 6 => Brown,
-            7 => LightGray, 8 => DarkGray, 9 => LightBlue, 10 => LightGreen, 11 => LightCyan,
-            12 => LightRed, 13 => Pink, 14 => Yellow, 15 => White,
-            _ => panic!("Undefined color value: {}", n)
+            0 => Black,
+            1 => Blue,
+            2 => Green,
+            3 => Cyan,
+            4 => Red,
+            5 => Magenta,
+            6 => Brown,
+            7 => LightGray,
+            8 => DarkGray,
+            9 => LightBlue,
+            10 => LightGreen,
+            11 => LightCyan,
+            12 => LightRed,
+            13 => Pink,
+            14 => Yellow,
+            15 => White,
+            _ => panic!("Undefined color value: {}", n),
         }
     }
 }
@@ -114,7 +127,7 @@ impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
-            byte => self.write_char(byte)
+            byte => self.write_char(byte),
         }
     }
 
@@ -127,10 +140,14 @@ impl Writer {
         let row = BUFFER_HEIGHT - 1;
         let col = self.column_position;
 
-        self.plot(col, row, ScreenChar {
-            ascii_character: byte,
-            color_code: self.color_code,
-        });
+        self.plot(
+            col,
+            row,
+            ScreenChar {
+                ascii_character: byte,
+                color_code: self.color_code,
+            },
+        );
         self.column_position += 1;
     }
 
@@ -169,7 +186,7 @@ impl Writer {
 pub fn is_drawable(c: char) -> bool {
     match c as u8 {
         MIN_DRAWABLE..=MAX_DRAWABLE => true,
-        _ => false
+        _ => false,
     }
 }
 
@@ -249,7 +266,14 @@ pub fn clear(num_spaces: usize, col: usize, row: usize, color: ColorCode) -> usi
 /// Plots the given character at the given location with the given color.
 /// It will **panic** on an illegal row or column.
 pub fn plot(c: char, col: usize, row: usize, color: ColorCode) {
-    WRITER.lock().plot(col, row, ScreenChar { ascii_character: c as u8, color_code: color });
+    WRITER.lock().plot(
+        col,
+        row,
+        ScreenChar {
+            ascii_character: c as u8,
+            color_code: color,
+        },
+    );
 }
 
 #[allow(dead_code)]
@@ -281,11 +305,26 @@ pub fn num_str_len(num: isize) -> usize {
 /// If the number exceeds the width of the buffer, it will be truncated.
 ///
 /// It will **panic** if an illegal row is given.
-pub fn plot_num_right_justified(total_space: usize, num: isize, col: usize, row: usize, color: ColorCode) -> usize {
+pub fn plot_num_right_justified(
+    total_space: usize,
+    num: isize,
+    col: usize,
+    row: usize,
+    color: ColorCode,
+) -> usize {
     let space_needed = num_str_len(num);
-    let leading_spaces = if space_needed < total_space {total_space - space_needed} else {0};
+    let leading_spaces = if space_needed < total_space {
+        total_space - space_needed
+    } else {
+        0
+    };
     if leading_spaces > 0 {
-        clear(leading_spaces, col, row, ColorCode::new(color.background(), color.background()));
+        clear(
+            leading_spaces,
+            col,
+            row,
+            ColorCode::new(color.background(), color.background()),
+        );
     }
     plot_num(num, col + leading_spaces, row, color)
 }
@@ -331,12 +370,17 @@ pub fn peek(col: usize, row: usize) -> (char, ColorCode) {
 
 #[allow(dead_code)]
 /// Represents different options for plotting data.
-pub enum Plot<'a>  {
-    Str(&'a str), USize(usize), USizeRightJustified(usize,usize), ISize(isize), ISizeRightJustified(isize, usize), Clear(usize)
+pub enum Plot<'a> {
+    Str(&'a str),
+    USize(usize),
+    USizeRightJustified(usize, usize),
+    ISize(isize),
+    ISizeRightJustified(isize, usize),
+    Clear(usize),
 }
 
 #[allow(dead_code)]
-impl <'a> Plot<'a> {
+impl<'a> Plot<'a> {
     /// Calls the corresponding plot function given the data.
     ///
     /// It will **panic** on an illegal row.
@@ -345,11 +389,13 @@ impl <'a> Plot<'a> {
             Plot::Str(s) => plot_str(s, col, row, color),
             Plot::Clear(num_spaces) => clear(*num_spaces, col, row, color),
             Plot::ISize(num) => plot_num(*num, col, row, color),
-            Plot::ISizeRightJustified(num, total_space) =>
-                plot_num_right_justified(*total_space, *num, col, row, color),
+            Plot::ISizeRightJustified(num, total_space) => {
+                plot_num_right_justified(*total_space, *num, col, row, color)
+            }
             Plot::USize(num) => plot_num(*num as isize, col, row, color),
-            Plot::USizeRightJustified(num, total_space) =>
+            Plot::USizeRightJustified(num, total_space) => {
                 plot_num_right_justified(*total_space, *num as isize, col, row, color)
+            }
         }
     }
 

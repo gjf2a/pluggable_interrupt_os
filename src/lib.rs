@@ -121,10 +121,10 @@
 // hlt_loop() and panic() are Copyright (c) 2019 Philipp Oppermann.
 // Everything else is written by Gabriel Ferrer.
 
+pub mod gdt;
+pub mod interrupts;
 pub mod serial;
 pub mod vga_buffer;
-pub mod interrupts;
-pub mod gdt;
 
 use core::panic::PanicInfo;
 
@@ -143,13 +143,18 @@ pub struct HandlerTable {
     timer: Option<fn()>,
     keyboard: Option<fn(DecodedKey)>,
     startup: Option<fn()>,
-    cpu_loop: fn() -> !
+    cpu_loop: fn() -> !,
 }
 
 impl HandlerTable {
     /// Creates a new HandlerTable with no handlers.
     pub fn new() -> Self {
-        HandlerTable {timer: None, keyboard: None, startup: None, cpu_loop: hlt_loop}
+        HandlerTable {
+            timer: None,
+            keyboard: None,
+            startup: None,
+            cpu_loop: hlt_loop,
+        }
     }
 
     /// Starts up a simple operating system using the specified handlers.

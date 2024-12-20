@@ -1,8 +1,8 @@
 #![no_std]
 #![no_main]
 
-mod vga_buffer;
 mod serial;
+mod vga_buffer;
 
 use pc_keyboard::DecodedKey;
 use pluggable_interrupt_os::HandlerTable;
