@@ -1,3 +1,9 @@
+# **0.5**
+  * Updated x86_64 to 0.15.2
+  * Updated pc-keyboard to 0.8.0
+  * Updated pic8259 to 0.11.0
+  * Updated uart_16550 to 0.3.2
+  * Fixed corresponding maintenance errors.
 # **0.4**
   * Updated to pic8259 version 0.10
   * Fixed corresponding maintenance errors.
