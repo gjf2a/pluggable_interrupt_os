@@ -17,7 +17,7 @@ volatile = "0.3" # Can't upgrade to 0.4
 spin = "0.9"
 x86_64 = "0.14" # Can't upgrade to 0.15
 uart_16550 = "0.3.2"
-pic8259 = "0.10"
+pic8259 = "0.11.0"
 pc-keyboard = "0.5" # Can't upgrade to 0.6
 
 [dependencies.lazy_static]
