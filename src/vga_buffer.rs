@@ -8,6 +8,7 @@
 // - Plot enum
 // - impl From for Color
 
+//use volatile::VolatileRef;
 use volatile::Volatile;
 use core::fmt;
 use lazy_static::lazy_static;
@@ -92,6 +93,7 @@ pub const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
+    //chars: [[VolatileRef<'static, ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
@@ -104,10 +106,12 @@ pub struct Writer {
 #[allow(dead_code)]
 impl Writer {
     fn plot(&mut self, col: usize, row: usize, content: ScreenChar) {
+        //self.buffer.chars[row][col].as_mut_ptr().write(content);
         self.buffer.chars[row][col].write(content);
     }
 
     fn peek(&self, col: usize, row: usize) -> ScreenChar {
+        //self.buffer.chars[row][col].as_ptr().read()
         self.buffer.chars[row][col].read()
     }
 
@@ -137,6 +141,8 @@ impl Writer {
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
+                //let character = self.buffer.chars[row][col].as_ptr().read();
+                //self.buffer.chars[row - 1][col].as_mut_ptr().write(character);
                 let character = self.buffer.chars[row][col].read();
                 self.buffer.chars[row - 1][col].write(character);
             }
@@ -151,6 +157,7 @@ impl Writer {
             color_code: self.color_code,
         };
         for col in 0..BUFFER_WIDTH {
+            //self.buffer.chars[row][col].as_mut_ptr().write(blank);
             self.buffer.chars[row][col].write(blank);
         }
     }
