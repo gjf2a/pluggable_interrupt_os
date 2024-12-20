@@ -15,8 +15,8 @@ categories = ["no-std", "hardware-support"]
 bootloader = "0.9.8" # Can't upgrade to 0.10
 volatile = "0.3" # Can't upgrade to 0.4
 spin = "0.9"
-x86_64 = "0.14"
-uart_16550 = "0.2"
+x86_64 = "0.14" # Can't upgrade to 0.15
+uart_16550 = "0.3.2"
 pic8259 = "0.10"
 pc-keyboard = "0.5" # Can't upgrade to 0.6
 
