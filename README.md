@@ -121,8 +121,7 @@ fn cpu_loop() -> ! {
             LAST_KEY.store(None);
             kernel.key(key);
         }
-        let current_tick = TICKED.load();
-        if current_tick {
+        if TICKED.load() {
             TICKED.store(false);
             kernel.tick();
         }
