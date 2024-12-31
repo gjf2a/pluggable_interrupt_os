@@ -96,42 +96,58 @@ Here is its [`main.rs`](https://github.com/gjf2a/pluggable_interrupt_template/bl
 #![no_std]
 #![no_main]
 
-use lazy_static::lazy_static;
-use spin::Mutex;
+use crossbeam::atomic::AtomicCell;
 use pc_keyboard::DecodedKey;
+use pluggable_interrupt_os::{vga_buffer::clear_screen, HandlerTable};
 use pluggable_interrupt_template::LetterMover;
-use pluggable_interrupt_os::HandlerTable;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     HandlerTable::new()
         .keyboard(key)
         .timer(tick)
+        .startup(startup)
+        .cpu_loop(cpu_loop)
         .start()
 }
 
-lazy_static! {
-    static ref LETTERS: Mutex<LetterMover> = Mutex::new(LetterMover::new());
-}
+static LAST_KEY: AtomicCell<Option<DecodedKey>> = AtomicCell::new(None);
+static TICKS: AtomicCell<usize> = AtomicCell::new(0);
 
-
-fn tick() {
-    LETTERS.lock().tick();
+fn cpu_loop() -> ! {
+    let mut kernel = LetterMover::new();
+    let mut last_tick = 0;
+    loop {
+        if let Some(key) = LAST_KEY.load() {
+            LAST_KEY.store(None);
+            kernel.key(key);
+        }
+        let current_tick = TICKS.load();
+        if current_tick > last_tick {
+            last_tick = current_tick;
+            kernel.tick();
+        }
+    }
 }
 
 fn key(key: DecodedKey) {
-    LETTERS.lock().key(key);
+    LAST_KEY.store(Some(key));
+}
+
+fn tick() {
+    TICKS.fetch_add(1);
+}
+
+fn startup() {
+    clear_screen();
 }
 ```
 
-I created the [`LetterMover`](https://github.com/gjf2a/pluggable_interrupt_template/blob/master/src/lib.rs)
-`struct` to represent the application state. It is wrapped in a **Mutex** and initialized using
-[lazy_static!](https://docs.rs/lazy_static/1.4.0/lazy_static/) to ensure safe access. Nearly
-any nontrivial program will need to make use of this design pattern.
+The code contained in the `cpu_loop()` function executes whenever interrupts are not triggered. Within that function is an instance of the [`LetterMover`](https://github.com/gjf2a/pluggable_interrupt_template/blob/master/src/lib.rs) `struct` that represents the application state. 
 
-The **tick()** function calls the `LetterMover::tick()` method after unlocking the object. 
-Similarly, the **key()** function calls the `LetterMover::key()` method, again after unlocking
-the object.
+To ensure safe concurrent updates, communication between the interrupt handlers and the main loop is mediated by `AtomicCell` objects (from the [`crossbeam`](https://crates.io/crates/crossbeam) crate). 
+
+The **key()** function updates the `LAST_KEY` variable, which tracks the most recent detected keypress. The **tick()** function sets the `TICKED` flag. In both cases, the main loop observes the signal given by the interrupt handler, resets the appropriate `AtomicCell` variable, and takes the appropriate action.
 
 Here is the rest of its code, found in its [`lib.rs`](https://github.com/gjf2a/pluggable_interrupt_template/blob/master/src/lib.rs) file:
 ```
@@ -257,73 +273,6 @@ On each tick:
 
 The keyboard handler receives each character as it is typed. Keys representable as a `char`
 are added to the moving string. The arrow keys change how the string is moving.
-
-# Running Background Code - An Alternative Solution to Concurrent Data Access
-
-The code contained in the function given to the `.cpu_loop()` method will execute whenever
-interrupts are not triggered. This option leads to an alternative implementation of 
-concurrent access to the central data structure. Rather than using a spinlock `Mutex`,
-the central data structure can instead be a local variable in the `cpu_loop` function. 
-Information about interrupts can be stored and accessed using `AtomicCell` objects from
-the `crossbeam` crate. 
-
-Note that this approach enables the creation of more general programs than the previous 
-approach, as arbitrary code can run in the `cpu_loop` while awaiting interrupts.
-
-The code below is an updated version of the `main.rs` in the previous example that employs this
-alternate approach. The `lib.rs` code from above works unchanged with this alternative version.
-
-```
-#![no_std]
-#![no_main]
-
-use pc_keyboard::DecodedKey;
-use pluggable_interrupt_os::HandlerTable;
-use pluggable_interrupt_os::vga_buffer::clear_screen;
-use pluggable_interrupt_template::LetterMover;
-use crossbeam::atomic::AtomicCell;
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    HandlerTable::new()
-        .keyboard(key)
-        .timer(tick)
-        .startup(startup)
-        .cpu_loop(cpu_loop)
-        .start()
-}
-
-static LAST_KEY: AtomicCell<Option<DecodedKey>> = AtomicCell::new(None);
-static TICKS: AtomicCell<usize> = AtomicCell::new(0);
-
-fn cpu_loop() -> ! {
-    let mut kernel = LetterMover::new();
-    let mut last_tick = 0;
-    loop {
-        if let Some(key) = LAST_KEY.load() {
-            LAST_KEY.store(None);
-            kernel.key(key);
-        }
-        let current_tick = TICKS.load();
-        if current_tick > last_tick {
-            last_tick = current_tick;
-            kernel.tick();
-        }
-    }
-}
-
-fn tick() {
-    TICKS.fetch_add(1);
-}
-
-fn key(key: DecodedKey) {
-    LAST_KEY.store(Some(key));
-}
-
-fn startup() {
-    clear_screen();
-}
-```
 
 # Concluding Thoughts
 
