@@ -151,32 +151,42 @@ Here is the rest of its code, found in its [`lib.rs`](https://github.com/gjf2a/p
 ```
 #![cfg_attr(not(test), no_std)]
 
-use bare_metal_modulo::{ModNum, ModNumIterator};
-use pluggable_interrupt_os::vga_buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, plot, ColorCode, Color, is_drawable};
-use pc_keyboard::{DecodedKey, KeyCode};
+use bare_metal_modulo::{MNum, ModNumC, ModNumIterator};
 use num::traits::SaturatingAdd;
+use pc_keyboard::{DecodedKey, KeyCode};
+use pluggable_interrupt_os::vga_buffer::{
+    is_drawable, plot, Color, ColorCode, BUFFER_HEIGHT, BUFFER_WIDTH,
+};
 
-#[derive(Copy,Debug,Clone,Eq,PartialEq)]
+use core::{
+    clone::Clone,
+    cmp::{Eq, PartialEq},
+    iter::Iterator,
+    marker::Copy,
+    prelude::rust_2024::derive,
+};
+
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct LetterMover {
     letters: [char; BUFFER_WIDTH],
-    num_letters: ModNum<usize>,
-    next_letter: ModNum<usize>,
-    col: ModNum<usize>,
-    row: ModNum<usize>,
-    dx: ModNum<usize>,
-    dy: ModNum<usize>
+    num_letters: ModNumC<usize, BUFFER_WIDTH>,
+    next_letter: ModNumC<usize, BUFFER_WIDTH>,
+    col: ModNumC<usize, BUFFER_WIDTH>,
+    row: ModNumC<usize, BUFFER_HEIGHT>,
+    dx: ModNumC<usize, BUFFER_WIDTH>,
+    dy: ModNumC<usize, BUFFER_HEIGHT>,
 }
 
 impl LetterMover {
     pub fn new() -> Self {
         LetterMover {
             letters: ['A'; BUFFER_WIDTH],
-            num_letters: ModNum::new(1, BUFFER_WIDTH),
-            next_letter: ModNum::new(1, BUFFER_WIDTH),
-            col: ModNum::new(BUFFER_WIDTH / 2, BUFFER_WIDTH),
-            row: ModNum::new(BUFFER_HEIGHT / 2, BUFFER_HEIGHT),
-            dx: ModNum::new(0, BUFFER_WIDTH),
-            dy: ModNum::new(0, BUFFER_HEIGHT)
+            num_letters: ModNumC::new(1),
+            next_letter: ModNumC::new(1),
+            col: ModNumC::new(BUFFER_WIDTH / 2),
+            row: ModNumC::new(BUFFER_HEIGHT / 2),
+            dx: ModNumC::new(0),
+            dy: ModNumC::new(0),
         }
     }
 ```
@@ -185,12 +195,11 @@ This data structure represents the letters the user has typed, the total number 
 the position of the next letter to type, the position of the string, and its motion. Initially,
 the string consists of the letter `A`, motionless, and situated in the middle of the screen.
 
-The [`ModNum` data type](https://crates.io/crates/bare_metal_modulo) represents an integer 
-(modulo m). It is very useful for keeping all of these values within the constraints of the 
-VGA buffer.
+The [`ModNumC` data type](https://crates.io/crates/bare_metal_modulo) represents an integer 
+(modulo m). It is very useful for ensuring that all of the position-related values fall within the constraints of the VGA buffer.
 
 ```
-    fn letter_columns(&self) -> impl Iterator<Item=usize> {
+    fn letter_columns(&self) -> impl Iterator<Item = usize> {
         ModNumIterator::new(self.col)
             .take(self.num_letters.a())
             .map(|m| m.a())
@@ -200,7 +209,7 @@ VGA buffer.
 Also from the [bare_metal_modulo](https://crates.io/crates/bare_metal_modulo) crate, the 
 `ModNumIterator` data type starts at the specified value and loops around through the ring.
 In this case, it takes just enough values to represent all of the columns to use when plotting
-our string. Using `ModNum` ensures that all the column values are legal and wrap around 
+our string. This ensures that all the column values are legal and wrap around 
 appropriately. 
 
 ```
