@@ -1,4 +1,7 @@
-# **0.5**
+# **0.5.1 - 2024-12-30 **
+  * No change in functionality.
+  * Updated documentation of using the template in README.md.
+# **0.5 - 2024-12-20 **
   * Updated x86_64 to 0.15.2
   * Updated pc-keyboard to 0.8.0
   * Updated pic8259 to 0.11.0
