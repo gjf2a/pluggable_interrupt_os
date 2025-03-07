@@ -115,15 +115,16 @@ static LAST_KEY: AtomicCell<Option<DecodedKey>> = AtomicCell::new(None);
 static TICKED: AtomicCell<bool> = AtomicCell::new(false);
 
 fn cpu_loop() -> ! {
-    let mut kernel = LetterMover::new();
+    let mut kernel = LetterMover::default();
     loop {
-        if let Some(key) = LAST_KEY.load() {
-            LAST_KEY.store(None);
-            kernel.key(key);
-        }
-        if TICKED.load() {
-            TICKED.store(false);
+        if let Ok(_) = TICKED.compare_exchange(true, false) {
             kernel.tick();
+        }
+        
+        if let Ok(k) = LAST_KEY.fetch_update(|k| if k.is_some() {Some(None)} else {None}) {
+            if let Some(k) = k {
+                kernel.key(k);
+            }
         }
     }
 }
@@ -149,10 +150,9 @@ The **key()** function updates the `LAST_KEY` variable, which tracks the most re
 
 Here is the rest of its code, found in its [`lib.rs`](https://github.com/gjf2a/pluggable_interrupt_template/blob/master/src/lib.rs) file:
 ```
-#![cfg_attr(not(test), no_std)]
+#![no_std]
 
-use bare_metal_modulo::{MNum, ModNumC, ModNumIterator};
-use num::traits::SaturatingAdd;
+use num::Integer;
 use pc_keyboard::{DecodedKey, KeyCode};
 use pluggable_interrupt_os::vga_buffer::{
     is_drawable, plot, Color, ColorCode, BUFFER_HEIGHT, BUFFER_WIDTH,
@@ -160,7 +160,7 @@ use pluggable_interrupt_os::vga_buffer::{
 
 use core::{
     clone::Clone,
-    cmp::{Eq, PartialEq},
+    cmp::{min, Eq, PartialEq},
     iter::Iterator,
     marker::Copy,
     prelude::rust_2024::derive,
@@ -169,50 +169,45 @@ use core::{
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct LetterMover {
     letters: [char; BUFFER_WIDTH],
-    num_letters: ModNumC<usize, BUFFER_WIDTH>,
-    next_letter: ModNumC<usize, BUFFER_WIDTH>,
-    col: ModNumC<usize, BUFFER_WIDTH>,
-    row: ModNumC<usize, BUFFER_HEIGHT>,
-    dx: ModNumC<usize, BUFFER_WIDTH>,
-    dy: ModNumC<usize, BUFFER_HEIGHT>,
+    num_letters: usize,
+    next_letter: usize,
+    col: usize,
+    row: usize,
+    dx: usize,
+    dy: usize,
+}
+
+pub fn safe_add<const LIMIT: usize>(a: usize, b: usize) -> usize {
+    (a + b).mod_floor(&LIMIT)
+}
+
+pub fn add1<const LIMIT: usize>(value: usize) -> usize {
+    safe_add::<LIMIT>(value, 1)
+}
+
+pub fn sub1<const LIMIT: usize>(value: usize) -> usize {
+    safe_add::<LIMIT>(value, LIMIT - 1)
+}
+
+impl Default for LetterMover {
+    fn default() -> Self {
+        Self {
+            letters: ['A'; BUFFER_WIDTH],
+            num_letters: 1,
+            next_letter: 1,
+            col: BUFFER_WIDTH / 2,
+            row: BUFFER_HEIGHT / 2,
+            dx: 0,
+            dy: 0,
+        }
+    }
 }
 
 impl LetterMover {
-    pub fn new() -> Self {
-        LetterMover {
-            letters: ['A'; BUFFER_WIDTH],
-            num_letters: ModNumC::new(1),
-            next_letter: ModNumC::new(1),
-            col: ModNumC::new(BUFFER_WIDTH / 2),
-            row: ModNumC::new(BUFFER_HEIGHT / 2),
-            dx: ModNumC::new(0),
-            dy: ModNumC::new(0),
-        }
+    fn letter_columns(&self) -> impl Iterator<Item = usize> + '_ {
+        (0..self.num_letters).map(|n| safe_add::<BUFFER_WIDTH>(n, self.col))
     }
-```
 
-This data structure represents the letters the user has typed, the total number of typed letters,
-the position of the next letter to type, the position of the string, and its motion. Initially,
-the string consists of the letter `A`, motionless, and situated in the middle of the screen.
-
-The [`ModNumC` data type](https://crates.io/crates/bare_metal_modulo) represents an integer 
-(modulo m). It is very useful for ensuring that all of the position-related values fall within the constraints of the VGA buffer.
-
-```
-    fn letter_columns(&self) -> impl Iterator<Item = usize> {
-        ModNumIterator::new(self.col)
-            .take(self.num_letters.a())
-            .map(|m| m.a())
-    }
-```
-
-Also from the [bare_metal_modulo](https://crates.io/crates/bare_metal_modulo) crate, the 
-`ModNumIterator` data type starts at the specified value and loops around through the ring.
-In this case, it takes just enough values to represent all of the columns to use when plotting
-our string. This ensures that all the column values are legal and wrap around 
-appropriately. 
-
-```
     pub fn tick(&mut self) {
         self.clear_current();
         self.update_location();
@@ -221,48 +216,46 @@ appropriately.
 
     fn clear_current(&self) {
         for x in self.letter_columns() {
-            plot(' ', x, self.row.a(), ColorCode::new(Color::Black, Color::Black));
+            plot(' ', x, self.row, ColorCode::new(Color::Black, Color::Black));
         }
     }
-    
+
     fn update_location(&mut self) {
-        self.col += self.dx;
-        self.row += self.dy;
+        self.col = safe_add::<BUFFER_WIDTH>(self.col, self.dx);
+        self.row = safe_add::<BUFFER_HEIGHT>(self.row, self.dy);
     }
-    
+
     fn draw_current(&self) {
         for (i, x) in self.letter_columns().enumerate() {
-            plot(self.letters[i], x, self.row.a(), ColorCode::new(Color::Cyan, Color::Black));
+            plot(
+                self.letters[i],
+                x,
+                self.row,
+                ColorCode::new(Color::Cyan, Color::Black),
+            );
         }
     }
-```
 
-On each tick:
-* Clear the current string.
-* Update its position.
-* Redraw the string in its new location.
-
-```
     pub fn key(&mut self, key: DecodedKey) {
         match key {
             DecodedKey::RawKey(code) => self.handle_raw(code),
-            DecodedKey::Unicode(c) => self.handle_unicode(c)
+            DecodedKey::Unicode(c) => self.handle_unicode(c),
         }
     }
 
     fn handle_raw(&mut self, key: KeyCode) {
         match key {
             KeyCode::ArrowLeft => {
-                self.dx -= 1;
+                self.dx = sub1::<BUFFER_WIDTH>(self.dx);
             }
             KeyCode::ArrowRight => {
-                self.dx += 1;
+                self.dx = add1::<BUFFER_WIDTH>(self.dx);
             }
             KeyCode::ArrowUp => {
-                self.dy -= 1;
+                self.dy = sub1::<BUFFER_HEIGHT>(self.dy);
             }
             KeyCode::ArrowDown => {
-                self.dy += 1;
+                self.dy = add1::<BUFFER_HEIGHT>(self.dy);
             }
             _ => {}
         }
@@ -270,13 +263,17 @@ On each tick:
 
     fn handle_unicode(&mut self, key: char) {
         if is_drawable(key) {
-            self.letters[self.next_letter.a()] = key;
-            self.next_letter += 1;
-            self.num_letters = self.num_letters.saturating_add(&ModNum::new(1, self.num_letters.m()));
+            self.letters[self.next_letter] = key;
+            self.next_letter = add1::<BUFFER_WIDTH>(self.next_letter);
+            self.num_letters = min(self.num_letters + 1, BUFFER_WIDTH);
         }
     }
 }
 ```
+
+This data structure represents the letters the user has typed, the total number of typed letters,
+the position of the next letter to type, the position of the string, and its motion. Initially,
+the string consists of the letter `A`, motionless, and situated in the middle of the screen.
 
 The keyboard handler receives each character as it is typed. Keys representable as a `char`
 are added to the moving string. The arrow keys change how the string is moving.

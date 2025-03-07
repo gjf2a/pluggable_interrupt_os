@@ -1,3 +1,5 @@
+# **0.5.3 - 2025-3-7 **
+  * Updated `pluggable_interrupt_template` documentation.
 # **0.5.2 - 2025-3-7 **
   * Errors arose with soft-float. Changing the bootloader version to 0.9.30 
     and adding the line `"rustc-abi": "x86-softfloat"` to `x86_64-blog_os.json`
