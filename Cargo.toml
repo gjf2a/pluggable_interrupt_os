@@ -1,6 +1,6 @@
 [package]
 name = "pluggable_interrupt_os"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["gjf2a <ferrer@hendrix.edu>"]
 edition = "2021"
 license = "MIT"
@@ -12,7 +12,7 @@ categories = ["no-std", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bootloader = "0.9.8" # Can't upgrade to 0.11 - would require fundamental change to the library, as the VGA buffer is no longer supported.
+bootloader = "0.9.30" # Can't upgrade to 0.11 - would require fundamental change to the library, as the VGA buffer is no longer supported.
 volatile = "0.3" # Can't upgrade to 0.6; I got it to compile, but the runtime behavior was bizarre.
 spin = "0.9.8"
 x86_64 = "0.15.2"
