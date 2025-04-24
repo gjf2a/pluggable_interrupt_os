@@ -9,6 +9,16 @@ use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 // Gabriel Ferrer added:
 // - HANDLERS variable.
 // - Use of HANDLERS in init_idt, timer_interrupt_handler, keyboard_interrupt_handler
+// - enum WhichInterrupt and the variable to hold its value
+
+#[derive(Copy, Clone, Debug)]
+pub enum WhichInterrupt {
+    Timer, Keyboard, Breakpoint,
+}
+
+lazy_static! {
+    static ref LAST_INTERRUPT: Mutex<Option<WhichInterrupt>> = Mutex::new(None);
+}
 
 lazy_static! {
     static ref HANDLERS: Mutex<Option<HandlerTable>> = Mutex::new(None);
@@ -36,14 +46,16 @@ pub fn init_idt(handlers: HandlerTable) {
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
+    *(LAST_INTERRUPT.lock()) = Some(WhichInterrupt::Breakpoint);
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
-    error_code: u64,
+    _error_code: u64,
 ) -> ! {
-    panic!("EXCEPTION: DOUBLE FAULT (code {error_code})\n{:#?}", stack_frame);
+    let last = LAST_INTERRUPT.lock();
+    panic!("EXCEPTION: DOUBLE FAULT (last interrupt: {:?})\n{:#?}", last, stack_frame);
 }
 
 const PIC_1_OFFSET: u8 = 32;
@@ -66,6 +78,7 @@ impl InterruptIndex {
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    *(LAST_INTERRUPT.lock()) = Some(WhichInterrupt::Timer);
     let h = &*HANDLERS.lock();
     if let Some(handler) = h {
         handler.handle_timer();
@@ -77,6 +90,7 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    *(LAST_INTERRUPT.lock()) = Some(WhichInterrupt::Keyboard);
     use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
     use x86_64::instructions::port::Port;
 
