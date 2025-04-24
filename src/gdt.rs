@@ -6,7 +6,7 @@ use x86_64::structures::tss::TaskStateSegment;
 use x86_64::VirtAddr;
 
 const OLD_FRAMES: usize = 4096;
-const NEW_FRAMES: usize = OLD_FRAMES * 4;
+const NEW_FRAMES: usize = OLD_FRAMES * 16;
 
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 pub const STACK_SIZE: usize = NEW_FRAMES * 5;
