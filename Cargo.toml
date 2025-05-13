@@ -20,6 +20,8 @@ uart_16550 = "0.3.2"
 pic8259 = "0.11.0"
 pc-keyboard = "0.8.0"
 
+no-panic = "0.1.35" # An experiment
+
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
